@@ -1,0 +1,169 @@
+---
+title: "FinalScript"
+author: "Dries Bonte"
+date: "3/08/2022"
+output: html_document
+tutorial used: https://www.rensvandeschoot.com/tutorials/lme4/
+https://www.geo.fu-berlin.de/en/v/soga/Basics-of-statistics/Logistic-Regression/Logistic-Regression-in-R---An-Example/index.html
+
+---
+setwd("D:/Bram/OneDrive - UGent/UGent-PC/Bram/Documents/colour/bachelorproef/2022/ballooning/analysis/")
+
+```{r}
+setwd("pathway")
+library(readxl)
+library(lme4)
+library(nlme)
+FINAL <- read_excel("dispersal_urbanisation_behavioural data_Belgium.xlsx")
+FINAL$u50<- as.numeric(FINAL$u50)
+FINAL$u100<- as.numeric(FINAL$u100)
+FINAL$u250<- as.numeric(FINAL$u250)
+FINAL$u500<- as.numeric(FINAL$u500)
+FINAL$u1000<- as.numeric(FINAL$u1000)
+FINAL$u2000<- as.numeric(FINAL$u2000)
+FINAL$u4000<- as.numeric(FINAL$u4000)
+summary(FINAL)
+
+
+```
+
+Analysis of proportion ballooning
+
+```{r}
+
+cor.test(FINAL$fB,FINAL$fR)
+
+model1 <- glmer(NB/Btot ~  nest + u50 + (1 | ID),data=FINAL, family = binomial)
+summary(model1)
+
+
+model5 <- glmer(NB/Btot ~  nest + u100 + (1 | ID),data=FINAL, family = binomial)
+summary(model5)
+
+model6 <- glmer(NB/Btot ~ nest +  u250 + (1 | ID),data=FINAL, family = binomial)
+summary(model6)
+
+
+model7 <- glmer(NB/Btot ~ nest +  u500 + (1 | ID),data=FINAL, family = binomial)
+summary(model7)
+
+
+model8 <- glmer(NB/Btot ~ nest +  u1000 + (1 | ID),data=FINAL, family = binomial)
+summary(model8)
+
+
+model9 <- glmer(NB/Btot ~  nest + u2000 + (1 | ID),data=FINAL, family = binomial)
+summary(model9)
+
+
+model10 <- glmer(NB/Btot ~ nest +  u4000  + (1 | ID),data=FINAL, family = binomial)
+summary(model10)
+
+
+```
+
+
+Proportion rappelling
+#remove u50 since data missing?
+
+```{r}
+
+model3 <- glmer(NR/Rtot ~  nest + u50 + (1 | ID),data=FINAL, family = binomial)
+summary(model3)
+
+
+model4 <- glmer(NR/Rtot ~  nest + u100 + (1 | ID),data=FINAL, family = binomial)
+summary(model4)
+
+model5 <- glmer(NR/Rtot ~   u250+ nest+ (1 | ID),data=FINAL, family = binomial)
+summary(model5)
+
+model6 <- glmer(NR/Rtot ~   u500+ nest+ (1 | ID),data=FINAL, family = binomial)
+summary(model6)
+
+model7 <- glmer(NR/Rtot ~   u1000+ nest+ (1 | ID),data=FINAL, family = binomial)
+summary(model7)
+
+model8 <- glmer(NR/Rtot ~   u2000+ nest+ (1 | ID),data=FINAL, family = binomial)
+summary(model8)
+
+model9 <- glmer(NR/Rtot ~   u4000+ nest+ (1 | ID),data=FINAL, family = binomial)
+summary(model9)
+
+model9 <- glmer(NR/Rtot ~   u4000+ u50 + nest+ (1 | ID),data=FINAL, family = binomial)
+summary(model9)
+
+```
+
+
+proportion tiptoe, if relevant at all; or sum all behaviours
+```{r}
+model1 <- glmer(NT/Ttot ~  nest + (1 | ID),data=FINAL, family = binomial)
+summary(model1)
+
+model2 <- glmer(NT/Ttot ~  groep + nest + u100 + (1 | ID),data=FINAL, family = binomial)
+summary(model2)
+
+model3 <- glmer(NT/Ttot ~  nest + u4000 + (1 | ID),data=FINAL, family = binomial)
+summary(model3)
+
+
+model4 <- glmer(NT/Ttot ~  nest + u100 + (1 | ID),data=FINAL, family = binomial)
+summary(model4)
+
+model5 <- glmer(NT/Ttot ~   u100 + (1 | ID),data=FINAL, family = binomial)
+summary(model5)
+```
+Spatial correlation of all behaviours, to be done with coordinates
+```{r}
+library(scales)
+library(ggthemes)
+library(ggplot2)
+library(patchwork)
+
+
+hist(FINAL$u4000)
+FINAL <- within(FINAL, {   
+  urban.cat <- NA # need to initialize variable
+  urban.cat [u4000 < 10] <- "R"
+  urban.cat[u4000 > 10] <- "U"
+   } )
+
+
+
+model1 <- glmer(NT/Ttot ~  urban.cat + nest + (1 | ID),data=FINAL, family = binomial)
+summary(model1)
+
+model2 <- glmer(fB/Btot ~  urban.cat + nest + (1 | ID),data=FINAL, family = binomial)
+summary(model2)
+
+model3 <- glmer(fR/Rtot ~  urban.cat +  (1 | ID),data=FINAL, family = binomial)
+summary(model3)
+
+
+plot(FINAL$u100,FINAL$fB, main="Ballooning")
+reg<-lm(FINAL$fB ~ FINAL$u100)
+reg
+abline(reg, col = "darkgreen")
+
+cor(fB,fR)
+
+plot(FINAL$u4000,FINAL$fR, main="Rapelling")
+reg<-lm(FINAL$fR ~ FINAL$u4000)
+reg
+abline(reg, col = "darkred")
+
+
+plot(FINAL$u50,FINAL$fR, main="Rapelling")
+reg<-lm(FINAL$fR ~ FINAL$u50)
+reg
+abline(reg, col = "darkred")
+
+
+ggplot(FINAL, aes(u4000,fR))+theme_bw()+
+    geom_point(position = position_jitter(w = 2, h = 0.05), size=3) +
+    geom_smooth(colour="red") + xlab("urbanisation") +
+    ylab("Proportion rappelling")
+```
+
+
